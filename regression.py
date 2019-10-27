@@ -25,3 +25,9 @@ target_var = df_input.keys()[int(config['Data']['target_column'])]
 df_target = df_input.loc[:, target_var]
 df_input.drop(target_var, axis=1, inplace=True)
 
+
+# fit data
+fitter = LinearRegression()
+logger.debug("Fitting the data...")
+fitter.fit(df_input, df_target)
+logger.info(f"Fitting completed. Score: {fitter.score(df_input, df_target):.3f}")
