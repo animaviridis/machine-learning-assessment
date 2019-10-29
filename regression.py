@@ -9,8 +9,8 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 # configure logger
-logging.basicConfig(level=config['Logging']['level'])
 logger = logging.getLogger(__name__)
+logger.setLevel(level=config['Logging']['level'])
 
 
 # load data dataset
