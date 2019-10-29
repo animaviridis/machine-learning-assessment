@@ -27,10 +27,10 @@ df_input.drop(target_var, axis=1, inplace=True)
 
 input_vars = list(df_input.keys())
 n = len(input_vars)
-fig, axes = plt.subplots(2, n//2 + n%2, figsize=(12, 10))
+fig, axes = plt.subplots(2, n//2 + n%2, figsize=(12, 6))
 for i, input_var in enumerate(input_vars):
     ax = axes[i%2, i//2]
-    ax.plot(df_input.loc[:, input_var], '.', color='darkblue', alpha=0.9)
+    ax.plot(df_input.loc[:, input_var], '.', color='darkblue', alpha=0.3)
     ax.grid(color='lightgray')
     ax.set_xlabel(input_var[:input_var.find('(')])
     if not i//2:
