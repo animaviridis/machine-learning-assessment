@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # read the configuration file
 config = configparser.ConfigParser()
-config.read("../../config.ini")
+config.read("config.ini")
 
 # configure logger
 logger = logging.getLogger(__name__)
