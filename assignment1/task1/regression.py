@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 
 # read the configuration file
 config = configparser.ConfigParser()
-config.read("config.ini")
+config.read("../../config.ini")
 
 # configure logger
 logger = logging.getLogger(__name__)
 logger.setLevel(level=config['Logging']['level'])
 
 # load data dataset
-data_fname = config['Data']['data_file']
+data_fname = config['RegressionData']['data_file']
 logger.info(f"Loading data from file: {data_fname}")
 df_input = pd.read_excel(data_fname)
 
@@ -23,7 +23,7 @@ logger.info(f"Loading completed. Data shape: {df_input.shape}")
 print(df_input.head())
 
 # split dataset into input and target
-target_var = df_input.keys()[int(config['Data']['target_column'])]
+target_var = df_input.keys()[int(config['RegressionData']['target_column'])]
 df_target = df_input.loc[:, target_var]
 df_input.drop(target_var, axis=1, inplace=True)
 
