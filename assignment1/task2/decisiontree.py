@@ -2,13 +2,13 @@
 
 
 class Node(object):
-    def __init__(self, data, indices: set = None, parent=None):
+    def __init__(self, data, indices=None, parent=None):
         self._data = data
 
-        if indices is not None:
-            self._indices = indices
-        else:
-            self._indices = set(range(len(data)))
+        indices = set(indices) if indices is not None else set(range(len(data)))
+
+        self._indices_distributed = set()
+        self._indices_remaining = indices
 
         self._parent = parent
         self._children = set()
@@ -18,8 +18,16 @@ class Node(object):
         return self._data
 
     @property
+    def indices_distributed(self):
+        return self._indices_distributed
+
+    @property
+    def indices_remaining(self):
+        return self._indices_remaining
+
+    @property
     def indices(self):
-        return self._indices
+        return self._indices_distributed | self._indices_remaining  # set union
 
     @property
     def parent(self):
@@ -33,9 +41,13 @@ class Node(object):
         if not isinstance(child, type(self)):
             raise TypeError(f"Child should be of type {type(self)}")
 
-        if not child.indices.issubset(self.indices):
-            raise ValueError("Child instance indices are not a subset of the parent indices)")
+        chis = child.indices
 
+        if not chis.issubset(self._indices_remaining):
+            raise ValueError("Child indices are not a subset of the parent indices remaining to be distributed)")
+
+        self._indices_distributed |= chis   # set union
+        self._indices_remaining -= chis     # set difference
         self._children.add(child)
 
     def new_child(self, indices):
