@@ -16,7 +16,7 @@ class Node(object):
             raise ValueError(f"Non-root node (level {level}) must have a parent")
 
         self._parent = parent
-        self._children = set()
+        self._children = []
 
     def __str__(self):
         root = '' if self.level else ' (root)'
@@ -67,7 +67,7 @@ class Node(object):
 
         self._indices_distributed |= chis   # set union
         self._indices_remaining -= chis     # set difference
-        self._children.add(child)
+        self._children.append(child)
 
     def add_new_child(self, indices):
         child = self.__class__(self._data, level=self.level+1, indices=indices, parent=self)
