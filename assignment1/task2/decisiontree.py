@@ -1,8 +1,10 @@
 """Simple decision tree implementation"""
 
+import pandas as pd
+
 
 class Node(object):
-    def __init__(self, data, level=0, indices=None, terminal=False, parent=None):
+    def __init__(self, data: pd.DataFrame, level: int=0, indices=None, terminal=False, parent=None):
         self._data = data
         self._level = level
         self.terminal = terminal
@@ -25,8 +27,12 @@ class Node(object):
         return f"Level {self.level} tree node{root}; {'' if self.resolved else 'not '}resolved {leaf}"
 
     @property
-    def data(self):
+    def full_data(self):
         return self._data
+
+    @property
+    def data(self):
+        return self._data.loc[self.indices]
 
     @property
     def level(self):
