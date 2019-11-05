@@ -1,6 +1,7 @@
 """Simple decision tree implementation"""
 
 import pandas as pd
+from math import inf
 
 
 class Node(object):
@@ -9,16 +10,25 @@ class Node(object):
         self._level = level
         self.terminal = terminal
 
-        indices = set(indices) if indices is not None else set(range(len(data)))
-
-        self._indices_distributed = set()
-        self._indices_remaining = indices
-
         if level and not parent:
             raise ValueError(f"Non-root node (level {level}) must have a parent")
 
+        if not level and parent:
+            raise ValueError("Root node should not have any parent")
+
         self._parent = parent
         self._children = []
+
+        if not level:
+            indices = set(range(len(data)))
+        else:
+            if (indices is None) or (not len(indices)):
+                raise ValueError("Empty set of indices for a non-root node not allowed")
+            else:
+                indices = set(indices)
+
+        self._indices_distributed = set()
+        self._indices_remaining = indices
 
     def __str__(self):
         root = '' if self.level else ' (root)'
@@ -81,4 +91,17 @@ class Node(object):
 
     def add_final_child(self):
         self.add_new_child(self.indices_remaining)
+
+    def split(self, attribute, thresholds):
+        """Split node on a continuous attribute."""
+
+        _thresholds = sorted(list(thresholds) + [-inf, inf])
+
+        vals = self.data[attribute]
+
+        for i in range(1, len(_thresholds)):
+            self.add_new_child(vals.index[(vals > _thresholds[i-1]) & (vals < _thresholds[i])])
+
+        if not self.resolved:
+            raise RuntimeError(f"Couldn't perform split on attribute {attribute} - possibly missing values")
 
