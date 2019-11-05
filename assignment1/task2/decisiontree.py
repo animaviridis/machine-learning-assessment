@@ -2,6 +2,9 @@
 
 import pandas as pd
 from math import inf
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Node(object):
@@ -103,5 +106,6 @@ class Node(object):
             self.add_new_child(vals.index[(vals > _thresholds[i-1]) & (vals < _thresholds[i])])
 
         if not self.resolved:
-            raise RuntimeError(f"Couldn't perform split on attribute {attribute} - possibly missing values")
+            logger.warning(f"Couldn't perform full split on attribute {attribute} - possibly missing values")
+            self.add_final_child()
 
