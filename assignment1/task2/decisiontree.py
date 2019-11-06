@@ -12,7 +12,7 @@ coloredlogs.install(level='DEBUG', logger=logger)
 
 
 class Node(object):
-    def __init__(self, data: pd.DataFrame, level: int=0, indices=None, terminal=False, parent=None):
+    def __init__(self, data: pd.DataFrame, level: int=0, indices=None, terminal=False, parent=None, which_child=0):
         self._data = data
         self._level = level
         self.terminal = terminal
@@ -24,6 +24,8 @@ class Node(object):
             raise ValueError("Root node should not have any parent")
 
         self._parent = parent
+        self._which_child = which_child
+
         self._children = []
 
         self._split_attribute = None
@@ -41,14 +43,19 @@ class Node(object):
         self._indices_remaining = indices
 
     def __str__(self):
-        root = '' if self.level else ' (root)'
+        if self.level:
+            attr, th = self.get_creation_stamp()
+            root = f'for {th[0]} <= {attr} < {th[1]}'
+        else:
+            root = 'root'
+
         leaf = '(leaf)' if self.terminal else f'with {len(self.children)} children'
 
         split = ""
         if self._split_attribute:
-            split = f"; split at attribute '{self._split_attribute}' with thresholds: {self._split_thresholds[1:-1]}"
+            split = f", split at attribute '{self._split_attribute}' with thresholds: {self._split_thresholds[1:-1]}"
 
-        return f"Level {self.level} tree node{root}; {'' if self.resolved else 'not '}resolved {leaf}{split}"
+        return f"Level {self.level} tree node ({root}); {'' if self.resolved else 'not '}resolved {leaf}{split}"
 
     @property
     def full_data(self):
@@ -82,6 +89,12 @@ class Node(object):
     def split_thresholds(self):
         return self._split_thresholds
 
+    def split_thresholds_for_child(self, which_child):
+        return self._split_thresholds[which_child:which_child+2]
+
+    def get_creation_stamp(self):
+        return self.parent.split_attribute, self.parent.split_thresholds_for_child(self._which_child)
+
     @property
     def split_attribute(self):
         return self._split_attribute
@@ -94,10 +107,27 @@ class Node(object):
     def children(self):
         return self._children
 
-    def get_child(self, attr_value):
+    def get_child(self, obs):
         """Return the relevant child instance based on the range the attribute value falls into"""
 
+        if isinstance(obs, pd.DataFrame):
+            if len(obs) > 1:
+                raise ValueError(f"Observation should be a single-line DataFrame (got {len(obs)})")
+            return self._get_child_from_df(obs)
+        elif isinstance(obs, (int, float)):
+            return self._get_child_from_value(obs)
+        else:
+            raise TypeError(f"Observation should be either a single-line DataFrame instance or a number (int, float)")
+
+    def _get_child_from_value(self, attr_value):
+        """Pick the relevant child instance based on the attribute value (assume it is the split attribute)"""
+
         return self.children[np.searchsorted(self._split_thresholds, attr_value) - 1]
+
+    def _get_child_from_df(self, observation):
+        """Pick the relevant child instance based on a new DataFrame-like object (pick the attribute first)"""
+
+        return self._get_child_from_value(observation[self._split_attribute].values.item())
 
     def _add_child(self, child):
         if not isinstance(child, type(self)):
@@ -113,7 +143,8 @@ class Node(object):
         self._children.append(child)
 
     def add_new_child(self, indices):
-        child = self.__class__(self._data, level=self.level+1, indices=indices, parent=self)
+        child = self.__class__(self._data, level=self.level+1, indices=indices, parent=self,
+                               which_child=len(self.children))
         self._add_child(child)
 
     def add_final_child(self):
