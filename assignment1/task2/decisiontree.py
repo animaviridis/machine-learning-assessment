@@ -153,6 +153,12 @@ class Node(object):
     def split(self, attribute, thresholds):
         """Split node on a continuous attribute."""
 
+        if self.resolved:
+            logger.warning("Splitting an already resolved node - existing children will be removed")
+            self._children = []
+            self._indices_remaining = self._indices_distributed.copy()
+            self._indices_distributed = set()
+
         th = sorted(list(thresholds) + [-inf, inf])
 
         vals = self.data[attribute]
@@ -166,7 +172,7 @@ class Node(object):
             self.add_new_child(indices)
 
         if not self.resolved:
-            logger.warning(f"Couldn't perform full split on attribute {attribute} - possibly missing values")
+            logger.warning(f"Could not perform full split on attribute {attribute} - possibly missing values")
             self.add_final_child()
 
         self._split_attribute = attribute
