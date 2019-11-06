@@ -59,7 +59,7 @@ class Node(object):
     def __str__(self):
         if self.level:
             attr, th = self.get_creation_stamp()
-            root = f'for {th[0]} <= {attr} < {th[1]}'
+            root = f'for {th[0]} < {attr} <= {th[1]}'
         else:
             root = 'root'
 
@@ -193,7 +193,7 @@ class Node(object):
         vals = self.data[attribute]
 
         for i in range(1, len(th)):
-            indices = vals.index[(vals >= th[i-1]) & (vals < th[i])]
+            indices = vals.index[(vals > th[i-1]) & (vals <= th[i])]
 
             if not len(indices):
                 logger.warning(f"No observations in value range [{th[i-1]}, {th[i]}) for attribute '{attribute}'")
