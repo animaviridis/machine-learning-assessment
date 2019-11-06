@@ -1,5 +1,6 @@
 """Simple decision tree implementation"""
 
+import numpy as np
 import pandas as pd
 from math import inf
 import logging
@@ -25,6 +26,9 @@ class Node(object):
         self._parent = parent
         self._children = []
 
+        self._split_attribute = None
+        self._split_thresholds = []
+
         if not level:
             indices = set(range(len(data)))
         else:
@@ -40,7 +44,11 @@ class Node(object):
         root = '' if self.level else ' (root)'
         leaf = '(leaf)' if self.terminal else f'with {len(self.children)} children'
 
-        return f"Level {self.level} tree node{root}; {'' if self.resolved else 'not '}resolved {leaf}"
+        split = ""
+        if self._split_attribute:
+            split = f"; split at attribute '{self._split_attribute}' with thresholds: {self._split_thresholds[1:-1]}"
+
+        return f"Level {self.level} tree node{root}; {'' if self.resolved else 'not '}resolved {leaf}{split}"
 
     @property
     def full_data(self):
@@ -71,12 +79,25 @@ class Node(object):
         return True if (self.terminal or not self._indices_remaining) else False
 
     @property
+    def split_thresholds(self):
+        return self._split_thresholds
+
+    @property
+    def split_attribute(self):
+        return self._split_attribute
+
+    @property
     def parent(self):
         return self._parent
 
     @property
     def children(self):
         return self._children
+
+    def get_child(self, attr_value):
+        """Return the relevant child instance based on the range the attribute value falls into"""
+
+        return self.children[np.searchsorted(self._split_thresholds, attr_value) - 1]
 
     def _add_child(self, child):
         if not isinstance(child, type(self)):
@@ -117,3 +138,5 @@ class Node(object):
             logger.warning(f"Couldn't perform full split on attribute {attribute} - possibly missing values")
             self.add_final_child()
 
+        self._split_attribute = attribute
+        self._split_thresholds = th
