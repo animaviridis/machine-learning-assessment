@@ -3,8 +3,11 @@
 import pandas as pd
 from math import inf
 import logging
+import coloredlogs
+
 
 logger = logging.getLogger(__name__)
+coloredlogs.install(level='DEBUG', logger=logger)
 
 
 class Node(object):
@@ -25,8 +28,8 @@ class Node(object):
         if not level:
             indices = set(range(len(data)))
         else:
-            if (indices is None) or (not len(indices)):
-                raise ValueError("Empty set of indices for a non-root node not allowed")
+            if indices is None:
+                raise ValueError("indices=None not allowed for a non-root node (use empty set if necessary)")
             else:
                 indices = set(indices)
 
@@ -98,12 +101,17 @@ class Node(object):
     def split(self, attribute, thresholds):
         """Split node on a continuous attribute."""
 
-        _thresholds = sorted(list(thresholds) + [-inf, inf])
+        th = sorted(list(thresholds) + [-inf, inf])
 
         vals = self.data[attribute]
 
-        for i in range(1, len(_thresholds)):
-            self.add_new_child(vals.index[(vals > _thresholds[i-1]) & (vals < _thresholds[i])])
+        for i in range(1, len(th)):
+            indices = vals.index[(vals >= th[i-1]) & (vals < th[i])]
+
+            if not len(indices):
+                logger.warning(f"No observations in value range [{th[i-1]}, {th[i]}) for attribute '{attribute}'")
+
+            self.add_new_child(indices)
 
         if not self.resolved:
             logger.warning(f"Couldn't perform full split on attribute {attribute} - possibly missing values")
