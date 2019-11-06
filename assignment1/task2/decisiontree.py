@@ -12,8 +12,9 @@ coloredlogs.install(level='DEBUG', logger=logger)
 
 
 class Node(object):
-    def __init__(self, data: pd.DataFrame, level: int=0, indices=None, terminal=False, parent=None, which_child=0):
-        self._data = data
+    def __init__(self, data: pd.DataFrame, target_column=0, level: int=0,
+                 indices=None, terminal=False, parent=None, which_child=0):
+
         self._level = level
         self.terminal = terminal
 
@@ -24,6 +25,11 @@ class Node(object):
             raise ValueError("Root node should not have any parent")
 
         self._parent = parent
+
+        self._target = target_column if not level else parent.target_column
+        self._validate_data(data, self._target)
+        self._data = data
+
         self._which_child = which_child
 
         self._children = []
@@ -41,6 +47,14 @@ class Node(object):
 
         self._indices_distributed = set()
         self._indices_remaining = indices
+
+    @staticmethod
+    def _validate_data(data, target_column):
+        target = data.keys().to_list()[target_column]
+        labels = data[target]
+
+        if labels.dtype != int:
+            raise TypeError(f"Class labels (column '{target}') must be integers (got {labels.dtype})")
 
     def __str__(self):
         if self.level:
@@ -100,6 +114,18 @@ class Node(object):
         return self._split_attribute
 
     @property
+    def target_attribute(self):
+        return self.data.keys().to_list()[self.target_column]
+
+    @property
+    def target_column(self):
+        return self._target
+
+    @property
+    def class_labels(self):
+        return self.data[self.target_attribute]
+
+    @property
     def parent(self):
         return self._parent
 
@@ -152,6 +178,9 @@ class Node(object):
 
     def split(self, attribute, thresholds):
         """Split node on a continuous attribute."""
+
+        if attribute == self.target_attribute:
+            raise ValueError(f"Cannot split on the target attribute ('{attribute}')")
 
         if self.resolved:
             logger.warning("Splitting an already resolved node - existing children will be removed")
