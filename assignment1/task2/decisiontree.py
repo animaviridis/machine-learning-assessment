@@ -129,16 +129,24 @@ class Node(object):
         return [labels.count(c) for c in set(labels)]
 
     @staticmethod
-    def calculate_variable_entropy(probs):
+    def calculate_entropy_probs(probs):
+        """Calculate variable entropy from variable value probabilities (list of probabilities/value occurrences)"""
+
         probs_norm = np.array(probs)
-        probs_norm /= probs_norm.sum()
+        probs_norm = probs_norm / probs_norm.sum()
 
         return - (probs_norm * np.log2(probs_norm)).sum()
+
+    @staticmethod
+    def calculate_entropy_labels(labels):
+        """Calculate variable entropy from variable values (list of labels)"""
+
+        return Node.calculate_entropy_probs(Node.get_label_occurrences(labels))
 
     def entropy(self):
         """Calculate entropy of the node (considering occurrences of each class label)"""
 
-        return self.calculate_variable_entropy(self.get_label_occurrences(self.class_labels.to_list()))
+        return self.calculate_entropy_labels((self.class_labels.to_list()))
 
     @property
     def parent(self):
@@ -204,10 +212,16 @@ class Node(object):
 
         return th, all_indices
 
-    def _get_split_entropy_gain(self, *args, **kwargs):
-        _, all_indices = self._get_split_indices(*args, **kwargs)
+    def get_split_information_gain(self, attribute, thresholds):
+        """Calculate expected information gain after splitting at given attribute with given thresholds"""
 
-        # TODO
+        _, all_indices = self._get_split_indices(attribute, thresholds)
+        split_labels = [self.class_labels.iloc[indices].to_list() for indices in all_indices]
+
+        n_tot = len(self.data)
+        remainder = sum([(len(labels)/n_tot * self.calculate_entropy_labels(labels)) for labels in split_labels])
+
+        return self.entropy() - remainder
 
     def split(self, attribute, thresholds):
         """Split node on a continuous attribute."""
@@ -221,15 +235,16 @@ class Node(object):
             self._indices_remaining = self._indices_distributed.copy()
             self._indices_distributed = set()
 
-        self._split_thresholds, all_indices = self._get_split_indices(attribute, thresholds)
+        th, all_indices = self._get_split_indices(attribute, thresholds)
 
-        for indices in all_indices:
+        for i, indices in enumerate(all_indices):
             if not len(indices):
-                logger.warning(f"No observations in value range [{th[i-1]}, {th[i]}) for attribute '{attribute}'")
+                logger.warning(f"No observations in value range ({th[i]}, {th[i+1]}] for attribute '{attribute}'")
             self.add_new_child(indices)
 
         if not self.resolved:
             logger.warning(f"Could not perform full split on attribute {attribute} - possibly missing values")
             self.add_final_child()
 
+        self._split_thresholds = th
         self._split_attribute = attribute
