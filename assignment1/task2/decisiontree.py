@@ -124,14 +124,21 @@ class Node(object):
     def class_labels(self):
         return self.data[self.target_attribute]
 
-    def calculate_entropy(self):
+    @staticmethod
+    def get_label_occurrences(labels):
+        return [labels.count(c) for c in set(labels)]
+
+    @staticmethod
+    def calculate_variable_entropy(probs):
+        probs_norm = np.array(probs)
+        probs_norm /= probs_norm.sum()
+
+        return - (probs_norm * np.log2(probs_norm)).sum()
+
+    def entropy(self):
         """Calculate entropy of the node (considering occurrences of each class label)"""
 
-        labels = self.class_labels.to_list()
-        occurrences = np.array([labels.count(c) for c in set(labels)])
-        probs = occurrences / occurrences.sum()
-        entropy = - (probs * np.log2(probs)).sum()
-        return entropy
+        return self.calculate_variable_entropy(self.get_label_occurrences(self.class_labels.to_list()))
 
     @property
     def parent(self):
@@ -184,6 +191,24 @@ class Node(object):
     def add_final_child(self):
         self.add_new_child(self.indices_remaining)
 
+    def _get_split_indices(self, attribute, thresholds):
+        th = sorted(list(thresholds) + [-inf, inf])
+
+        vals = self.data[attribute]
+
+        all_indices = []
+
+        for i in range(1, len(th)):
+            indices = vals.index[(vals > th[i - 1]) & (vals <= th[i])]
+            all_indices.append(indices)
+
+        return th, all_indices
+
+    def _get_split_entropy_gain(self, *args, **kwargs):
+        _, all_indices = self._get_split_indices(*args, **kwargs)
+
+        # TODO
+
     def split(self, attribute, thresholds):
         """Split node on a continuous attribute."""
 
@@ -196,16 +221,11 @@ class Node(object):
             self._indices_remaining = self._indices_distributed.copy()
             self._indices_distributed = set()
 
-        th = sorted(list(thresholds) + [-inf, inf])
+        self._split_thresholds, all_indices = self._get_split_indices(attribute, thresholds)
 
-        vals = self.data[attribute]
-
-        for i in range(1, len(th)):
-            indices = vals.index[(vals > th[i-1]) & (vals <= th[i])]
-
+        for indices in all_indices:
             if not len(indices):
                 logger.warning(f"No observations in value range [{th[i-1]}, {th[i]}) for attribute '{attribute}'")
-
             self.add_new_child(indices)
 
         if not self.resolved:
@@ -213,4 +233,3 @@ class Node(object):
             self.add_final_child()
 
         self._split_attribute = attribute
-        self._split_thresholds = th
