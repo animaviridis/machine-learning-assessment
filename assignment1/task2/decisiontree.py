@@ -4,10 +4,9 @@ import numpy as np
 import pandas as pd
 from math import inf
 import logging
-import coloredlogs
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(level='DEBUG', logger=logger)
+logger.setLevel('DEBUG')
 
 
 class Node(object):
@@ -228,7 +227,7 @@ class Node(object):
 
         return self.entropy() - remainder
 
-    def split(self, attribute, thresholds):
+    def split_at(self, attribute, thresholds):
         """Split node on a continuous attribute."""
 
         if attribute == self.target_attribute:
@@ -255,7 +254,7 @@ class Node(object):
         self._split_attribute = attribute
 
     def choose_split_threshold(self, attribute, n=10):
-        vals = np.array(self.data[attribute])  # values for the attribute
+        vals = np.sort(np.array(self.data[attribute]))  # values for the attribute
         th_cand = 0.5 * (vals[1:] + vals[:-1])  # threshold candidates - consecutive mid-points
         th_cand = th_cand[::n]  # check every n-th
 
@@ -263,17 +262,28 @@ class Node(object):
 
         idx = np.argmax(gains)
 
-        return gains[idx], th_cand[idx]
+        chosen_gain = gains[idx]
+        chosen_threshold = th_cand[idx]
+        logger.debug(f"For attribute {attribute}, best gain is {chosen_gain:.2g} (at threshold {chosen_threshold:.3g})")
+
+        return chosen_gain, chosen_threshold
 
     def choose_split_attribute(self, **kwargs):
         all_attributes = self.input_attributes
         all_gains = len(all_attributes) * [0]
         all_thresholds = all_gains[:]
 
+        logger.debug(f"Choosing split attribute for {self}")
         for i, attribute in enumerate(all_attributes):
             all_gains[i], all_thresholds[i] = self.choose_split_threshold(attribute, **kwargs)
 
         idx = np.argmax(all_gains)
+        chosen_attribute = all_attributes[idx]
+        logger.debug(f"Chosen attribute: {chosen_attribute} (expected gain: {all_gains[idx]:.3g})")
 
-        return all_attributes[idx], [all_thresholds[idx]]
+        return chosen_attribute, [all_thresholds[idx]]
 
+    def split(self, **kwargs):
+        s = self.choose_split_attribute(**kwargs)
+        logger.info(f"Splitting at attribute '{s[0]}' with threshold: {s[1][0]:.2g}")
+        self.split_at(*s)
