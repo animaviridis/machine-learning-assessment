@@ -2,6 +2,7 @@ import configparser
 import numpy as np
 import pandas as pd
 import logging
+import coloredlogs
 
 from decisiontree import Node
 
@@ -12,7 +13,7 @@ config.read("config.ini")
 
 # configure logger
 logger = logging.getLogger(__name__)
-logger.setLevel(level=config['Logging']['level'])
+coloredlogs.install(level=config['Logging']['level'], logger=logger.parent)
 
 # load dataset
 # a) load data headers, strip 3 initial characters (row number + closing bracket + optional whitespace)
@@ -29,3 +30,6 @@ df_input = pd.read_csv(data_fname, names=headers)
 
 # Initialise a decision tree
 tree = Node(df_input, target_column=0)
+tree.split()
+for c in tree.children:
+    c.split()
