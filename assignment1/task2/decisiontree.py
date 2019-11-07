@@ -52,7 +52,7 @@ class Node(object):
         target = data.keys().to_list()[target_column]
         labels = data[target]
 
-        if labels.dtype not in [int, np.int16]:
+        if labels.dtype not in [int, np.int64]:
             raise TypeError(f"Class labels (column '{target}') must be integers (got {labels.dtype})")
 
     def __str__(self):
