@@ -5,6 +5,7 @@ import pandas as pd
 from math import inf
 import logging
 import coloredlogs
+from scipy import stats
 
 
 logger = logging.getLogger(__name__)
@@ -124,6 +125,13 @@ class Node(object):
     @property
     def class_labels(self):
         return self.data[self.target_attribute]
+
+    def calculate_entropy(self):
+        """Calculate entropy of the node (considering occurrences of each class label)"""
+
+        labels = self.class_labels.to_list()
+        occurrences = [labels.count(c) for c in set(labels)]
+        return stats.entropy(occurrences)
 
     @property
     def parent(self):
