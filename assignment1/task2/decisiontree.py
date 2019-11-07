@@ -117,6 +117,11 @@ class Node(object):
         return self.data.keys().to_list()[self.target_column]
 
     @property
+    def input_attributes(self):
+        all_keys = self.data.keys().to_list()
+        return all_keys[:self.target_column] + all_keys[self.target_column+1:]
+
+    @property
     def target_column(self):
         return self._target
 
@@ -216,7 +221,7 @@ class Node(object):
         """Calculate expected information gain after splitting at given attribute with given thresholds"""
 
         _, all_indices = self._get_split_indices(attribute, thresholds)
-        split_labels = [self.class_labels.iloc[indices].to_list() for indices in all_indices]
+        split_labels = [self.class_labels.loc[indices].to_list() for indices in all_indices]
 
         n_tot = len(self.data)
         remainder = sum([(len(labels)/n_tot * self.calculate_entropy_labels(labels)) for labels in split_labels])
@@ -248,3 +253,27 @@ class Node(object):
 
         self._split_thresholds = th
         self._split_attribute = attribute
+
+    def choose_split_threshold(self, attribute, n=10):
+        vals = np.array(self.data[attribute])  # values for the attribute
+        th_cand = 0.5 * (vals[1:] + vals[:-1])  # threshold candidates - consecutive mid-points
+        th_cand = th_cand[::n]  # check every n-th
+
+        gains = [self.get_split_information_gain(attribute, [th]) for th in th_cand]
+
+        idx = np.argmax(gains)
+
+        return gains[idx], th_cand[idx]
+
+    def choose_split_attribute(self, **kwargs):
+        all_attributes = self.input_attributes
+        all_gains = len(all_attributes) * [0]
+        all_thresholds = all_gains[:]
+
+        for i, attribute in enumerate(all_attributes):
+            all_gains[i], all_thresholds[i] = self.choose_split_threshold(attribute, **kwargs)
+
+        idx = np.argmax(all_gains)
+
+        return all_attributes[idx], [all_thresholds[idx]]
+

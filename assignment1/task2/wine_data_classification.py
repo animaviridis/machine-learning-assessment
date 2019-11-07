@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import logging
 
+from decisiontree import Node
+
 
 # read the configuration file
 config = configparser.ConfigParser()
@@ -24,3 +26,6 @@ data_fname = config['Data']['data_file']
 logger.info(f"Loading data from file: {data_fname}")
 df_input = pd.read_csv(data_fname, names=headers)
 
+
+# Initialise a decision tree
+tree = Node(df_input, target_column=0)
