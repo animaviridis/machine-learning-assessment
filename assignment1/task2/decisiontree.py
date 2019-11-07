@@ -46,6 +46,8 @@ class Node(object):
         self._indices_distributed = set()
         self._indices_remaining = indices
 
+        self._entropy = self.calculate_entropy_labels((self.class_labels.to_list()))
+
     @staticmethod
     def _validate_data(data, target_column):
         target = data.keys().to_list()[target_column]
@@ -150,7 +152,7 @@ class Node(object):
     def entropy(self):
         """Calculate entropy of the node (considering occurrences of each class label)"""
 
-        return self.calculate_entropy_labels((self.class_labels.to_list()))
+        return self._entropy
 
     @property
     def parent(self):
