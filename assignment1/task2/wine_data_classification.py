@@ -29,17 +29,11 @@ data_fname = config['Data']['data_file']
 logger.info(f"Loading data from file: {data_fname}")
 df_input = pd.read_csv(data_fname, names=headers)
 
+# perform classification using DT
 N_SPLITS = 10
 tree_params = dict(max_depth=range(3, 10), min_points=range(1, 5))
-tree_results = []
 
-tree_params_keys = tree_params.keys()
-tree_params_prod = itertools.product(*tree_params.values())
-for params in tqdm(tree_params_prod):
-    params_dict = dict(zip(tree_params_keys, params))
-    xv = aux.cross_validate_tree(N_SPLITS, df_input)
-    params_dict.update(xv)
-    tree_results.append(params_dict)
+all_results, best_result = aux.tune_params(aux.cross_validate_tree, tree_params, func_args=(N_SPLITS, df_input))
+print(all_results)
+print("Best result: ", best_result)
 
-best_result = tree_results[np.argmax([t['f1_score'] for t in tree_results])]
-print(best_result)

@@ -5,6 +5,7 @@ from sklearn.preprocessing import label_binarize
 from sklearn import metrics
 from sklearn.model_selection import KFold
 from tqdm import tqdm
+import itertools
 
 from decisiontree import Node
 
@@ -76,3 +77,20 @@ def cross_validate_tree(n_splits, data, **kwargs):
 
     calculate_and_plot_roc(test_labels_true, test_labels_pred, title="ROC curves for wine data classification")
     return calculate_metrics(test_labels_true, test_labels_pred)
+
+
+def tune_params(func, params, func_args=(), func_kwargs=None):
+    func_kwargs = func_kwargs or {}
+    results = []
+
+    params_keys = params.keys()
+    params_prod = itertools.product(*params.values())
+
+    for params_i in tqdm(params_prod):
+        params_i_dict = dict(zip(params_keys, params_i))
+        xv = func(*func_args, **func_kwargs)
+        params_i_dict.update(xv if isinstance(xv, dict) else {'metrics': xv})
+        results.append(params_i_dict)
+
+    best_result = results[int(np.argmax([t['f1_score'] for t in results]))]
+    return results, best_result
