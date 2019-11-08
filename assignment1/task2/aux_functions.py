@@ -1,7 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import logging
 from sklearn.preprocessing import label_binarize
 from sklearn import metrics
+from sklearn.model_selection import KFold
+
+from decisiontree import Node
+
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_roc(labels_true, labels_pred):
@@ -49,3 +56,22 @@ def calculate_metrics(labels_true, labels_pred):
 
     return cm, accuracy, f1_score
 
+
+def cross_validate_tree(n_splits, data, **kwargs):
+    logger.info(f"Decision tree learning and testing with {n_splits}-fold cross validation")
+
+    splitter = KFold(n_splits=n_splits, shuffle=True)
+
+    test_labels_true = []
+    test_labels_pred = []
+
+    for i, (train_idx, test_idx) in enumerate(splitter.split(data)):
+        logger.info(f"Cross-validation round {i} with {len(train_idx)} train samples and {len(test_idx)} test samples")
+        logger.debug(f"Test indices: {test_idx}")
+
+        true_i, pred_i = Node.train_and_test(data, train_idx, test_idx, **kwargs)
+        test_labels_true.extend(true_i)
+        test_labels_pred.extend(pred_i)
+
+    calculate_and_plot_roc(test_labels_true, test_labels_pred, title="ROC curves for wine data classification")
+    return calculate_metrics(test_labels_true, test_labels_pred)

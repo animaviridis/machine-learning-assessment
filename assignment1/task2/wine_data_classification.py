@@ -4,9 +4,6 @@ import pandas as pd
 import logging
 import coloredlogs
 
-from sklearn.model_selection import KFold
-
-from decisiontree import Node
 import aux_functions as aux
 
 
@@ -32,32 +29,5 @@ df_input = pd.read_csv(data_fname, names=headers)
 
 N_SPLITS = 10
 
-logger.info(f"Decision tree learning and testing with {N_SPLITS}-fold cross validation")
-splitter = KFold(n_splits=N_SPLITS, shuffle=True)
-
-test_labels_true = []
-test_labels_pred = []
-
-for i, (train_idx, test_idx) in enumerate(splitter.split(df_input)):
-    logger.info(f"Cross-validation round {i} with {len(train_idx)} train samples and {len(test_idx)} test samples")
-    logger.debug(f"Test indices: {test_idx}")
-
-    # Initialise a decision tree
-    tree = Node(df_input, target_column=0, indices=train_idx)
-
-    # perform learning
-    tree.learn(max_depth=5)
-    tree.print_terminal_labels()
-
-    # prune
-    tree.prune(min_points=2)
-    tree.print_terminal_labels()
-
-    true_i, pred_i = tree.test(df_input.iloc[test_idx])
-    test_labels_true.extend(true_i)
-    test_labels_pred.extend(pred_i)
-
-
-cm, accuracy, f1_score = aux.calculate_metrics(test_labels_true, test_labels_pred)
+cm, accuracy, f1_score = aux.cross_validate_tree(N_SPLITS, df_input)
 logger.info(f"Total accuracy: {100*accuracy:.2f}% ({cm.trace()}/{cm.sum()} samples); F1 score: {f1_score}")
-aux.calculate_and_plot_roc(test_labels_true, test_labels_pred, title="ROC curves for wine data classification")

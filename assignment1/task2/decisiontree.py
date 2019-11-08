@@ -6,7 +6,6 @@ from math import inf
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel('DEBUG')
 
 
 class Node(object):
@@ -404,3 +403,39 @@ class Node(object):
         logger.info(f"Testing score: {score} ({correct}/{n} samples)")
 
         return true_classes, pred_classes
+
+    @staticmethod
+    def train_and_test(data: pd.DataFrame, train_idx, test_idx, target_column=0, max_depth=5, min_points=2, n=10):
+        """Initialise, train and test a decision tree.
+
+        Parameters
+        ----------
+        data            :   pandas.DataFrame
+            classification data (containing the class labels; both training and testing data)
+        train_idx       :   iterable
+            indices of samples from the data to be used in training
+        test_idx        :   iterable
+            indices of samples from the data to be used in testing
+        target_column   :   int
+            index of the class labels column in data
+        max_depth       :   int
+            maximal depth of the tree (number of children generations of the root)
+        min_points      :   int
+            minimal number of samples in a leaf (if less, the node will be pruned - its parent's split will be undone
+        n               :   int
+            granularity for the threshold search (use every n-th value);
+            learning time grows approximately inversely proportionally to n
+        """
+
+        # Initialise a decision tree
+        tree = Node(data, target_column=target_column, indices=train_idx)
+
+        # perform learning
+        tree.learn(max_depth=max_depth, n=n)
+        tree.print_terminal_labels()
+
+        # prune
+        tree.prune(min_points=min_points)
+        tree.print_terminal_labels()
+
+        return tree.test(data.iloc[test_idx])
