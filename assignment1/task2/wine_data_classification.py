@@ -30,5 +30,11 @@ df_input = pd.read_csv(data_fname, names=headers)
 
 # Initialise a decision tree
 tree = Node(df_input, target_column=0)
-tree.learn()
+
+# perform learning
+tree.learn(max_depth=5)
+tree.print_terminal_labels()
+
+# prune
+tree.prune(min_points=2)
 tree.print_terminal_labels()

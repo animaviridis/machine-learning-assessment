@@ -143,6 +143,10 @@ class Node(object):
         return len(set(self.class_labels))
 
     @property
+    def n_points(self):
+        return len(self.data)
+
+    @property
     def uniform(self):
         return self.n_classes == 1
 
@@ -257,9 +261,7 @@ class Node(object):
 
         if self.resolved:
             logger.warning("Splitting an already resolved node - existing children will be removed")
-            self._children = []
-            self._indices_remaining = self._indices_distributed.copy()
-            self._indices_distributed = set()
+            self.undo_split()
 
         th, all_indices = self._get_split_indices(attribute, thresholds)
 
@@ -274,6 +276,12 @@ class Node(object):
 
         self._split_thresholds = th
         self._split_attribute = attribute
+
+    def undo_split(self):
+        logger.debug(f"Undoing split at node {self.trace()}")
+        self._children = []
+        self._indices_remaining = self._indices_distributed.copy()
+        self._indices_distributed = set()
 
     def choose_split_threshold(self, attribute, n=10):
         vals = np.sort(np.array(self.data[attribute]))  # values for the attribute
@@ -358,3 +366,15 @@ class Node(object):
 
         else:
             return []
+
+    def prune(self, min_points=2):
+        if len(self.children):
+            if any(child.n_points < min_points for child in self.children):
+                logger.info(f"Pruning at node {self.trace()}")
+                self.undo_split()
+                self.terminate()
+
+            else:
+                for child in self.children:
+                    child.prune(min_points=min_points)
+
