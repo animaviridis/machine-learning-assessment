@@ -61,7 +61,7 @@ class Node(object):
     def __str__(self):
         if self.level:
             attr, th = self.get_creation_stamp()
-            root = f'for {th[0]} < {attr} <= {th[1]}'
+            root = f'for {th[0]} < {attr} <= {th[1]}, trace: {self.trace()}'
         else:
             root = 'root'
 
@@ -320,26 +320,41 @@ class Node(object):
             raise ValueError(f"Invalid maximal depth ({max_depth})")
 
         if max_depth == 0:
-            logger.info(f"Reached the maximal depth (at {self}) - no further splitting")
+            logger.info(f"Reached the maximal depth (at {self.trace()}) - no further splitting")
             self.terminate()
             return 1
 
         if self.uniform:
-            logger.info(f"{self} is an uniform node - no further splitting")
+            logger.info(f"Node {self.trace()} is an uniform node - no further splitting")
             self.terminate()
             return 1
 
         if self._terminal:
-            logger.info(f"Splitting a node previously marked as terminal: {self}")
+            logger.info(f"Splitting a node previously marked as terminal: {self.trace()}")
             self._terminal = False
 
-        logger.info(f"Performing split of {self}")
+        logger.info(f"Performing split of node {self.trace()}")
         self.split(**kwargs)
 
-        logger.debug(f"Learning children of {self}")
+        logger.debug(f"Learning children of node {self.trace()}")
         depths = []
         for child in self.children:
             depths.append(child.learn(max_depth=max_depth-1, **kwargs))
 
         self._depth = max(depths)
         return self._depth + 1
+
+    def print_terminal_labels(self):
+        if len(self.children):
+            for child in self.children:
+                child.print_terminal_labels()
+
+        else:
+            print(f"Level {self.level} node, {self.trace()}: class {self._class} ({self.class_labels.to_list()})")
+
+    def trace(self):
+        if self.parent:
+            return self.parent.trace() + [self._which_child]
+
+        else:
+            return []
