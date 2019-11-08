@@ -37,7 +37,7 @@ class Node(object):
         self._split_thresholds = []
 
         if not level:
-            indices = set(range(len(data)))
+            indices = set(data.index)
         else:
             if indices is None:
                 raise ValueError("indices=None not allowed for a non-root node (use empty set if necessary)")
