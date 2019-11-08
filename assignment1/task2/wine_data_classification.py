@@ -59,4 +59,5 @@ for i, (train_idx, test_idx) in enumerate(splitter.split(df_input)):
 
 cm = metrics.confusion_matrix(test_labels_true, test_labels_pred)
 accuracy = cm.trace() / cm.sum()
-logger.info(f"Total accuracy: {100*accuracy:.2f}% ({cm.trace()}/{cm.sum()} samples)")
+f1_score = metrics.f1_score(test_labels_true, test_labels_pred, average='micro')
+logger.info(f"Total accuracy: {100*accuracy:.2f}% ({cm.trace()}/{cm.sum()} samples); F1 score: {f1_score}")
