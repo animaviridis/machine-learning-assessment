@@ -208,7 +208,13 @@ class Node(object):
     def _get_child_from_df(self, observation):
         """Pick the relevant child instance based on a new DataFrame-like object (pick the attribute first)"""
 
-        return self._get_child_from_value(observation[self._split_attribute].values.item())
+        return self._get_child_from_value(observation[self._split_attribute].item())
+
+    def predict_class(self, observation):
+        if self._terminal:
+            return self._class
+
+        return self._get_child_from_df(observation).predict_class(observation)
 
     def _add_child(self, child):
         if not isinstance(child, type(self)):
@@ -376,3 +382,16 @@ class Node(object):
                 for child in self.children:
                     child.prune(min_points=min_points)
 
+    def test(self, observations: pd.DataFrame):
+        correct = 0
+        n = len(observations)
+
+        for i in range(n):
+            obs = observations.iloc[i]
+            correct += (self.predict_class(obs) == obs[self.target_attribute])
+
+        score = correct / n
+
+        logger.info(f"Testing score: {score} ({correct}/{n} samples)")
+
+        return score

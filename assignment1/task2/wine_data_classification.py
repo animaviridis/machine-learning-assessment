@@ -38,3 +38,5 @@ tree.print_terminal_labels()
 # prune
 tree.prune(min_points=2)
 tree.print_terminal_labels()
+
+tree.test(df_input.iloc[np.random.randint(0, len(df_input), 10)])
