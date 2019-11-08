@@ -4,6 +4,8 @@ import pandas as pd
 import logging
 import coloredlogs
 
+from sklearn.model_selection import KFold
+
 from decisiontree import Node
 
 
@@ -27,16 +29,26 @@ data_fname = config['Data']['data_file']
 logger.info(f"Loading data from file: {data_fname}")
 df_input = pd.read_csv(data_fname, names=headers)
 
+N_SPLITS = 5
 
-# Initialise a decision tree
-tree = Node(df_input, target_column=0)
+logger.info(f"Decision tree learning and testing with {N_SPLITS}-fold cross validation")
+splitter = KFold(n_splits=N_SPLITS, shuffle=True)
+total_score = 0
+for train_idx, test_idx in splitter.split(df_input):
+    print(train_idx, test_idx)
 
-# perform learning
-tree.learn(max_depth=5)
-tree.print_terminal_labels()
+    # Initialise a decision tree
+    tree = Node(df_input, target_column=0, indices=train_idx)
 
-# prune
-tree.prune(min_points=2)
-tree.print_terminal_labels()
+    # perform learning
+    tree.learn(max_depth=5)
+    tree.print_terminal_labels()
 
-tree.test(df_input.iloc[np.random.randint(0, len(df_input), 10)])
+    # prune
+    tree.prune(min_points=2)
+    tree.print_terminal_labels()
+
+    total_score += tree.test(df_input.iloc[test_idx])
+
+total_score /= N_SPLITS
+logger.info(f"DT Total testing score: {total_score}")
