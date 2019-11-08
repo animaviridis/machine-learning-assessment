@@ -3,9 +3,11 @@ import numpy as np
 import pandas as pd
 import logging
 import coloredlogs
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import KFold
 from sklearn import metrics
+from sklearn.preprocessing import label_binarize
 
 from decisiontree import Node
 
@@ -61,3 +63,29 @@ cm = metrics.confusion_matrix(test_labels_true, test_labels_pred)
 accuracy = cm.trace() / cm.sum()
 f1_score = metrics.f1_score(test_labels_true, test_labels_pred, average='micro')
 logger.info(f"Total accuracy: {100*accuracy:.2f}% ({cm.trace()}/{cm.sum()} samples); F1 score: {f1_score}")
+
+# Note: the ROC/ROC AUC calculation and plotting has been prepared based on:
+# https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
+
+classes = list(set(test_labels_true))
+test_labels_true_bin = label_binarize(test_labels_true, classes=classes)
+
+fpr = dict()
+tpr = dict()
+roc_auc = dict()
+for i in range(len(classes)):
+    c = classes[i]
+    y_score = [(t == c) for t in test_labels_pred]
+    fpr[c], tpr[c], _ = metrics.roc_curve(test_labels_true_bin[:, i], y_score)
+    roc_auc[c] = metrics.auc(fpr[c], tpr[c])
+
+fig, ax = plt.subplots()
+ax.plot([0, 1], [0, 1], 'k--', lw=1.5)
+for c in fpr.keys():
+    ax.plot(fpr[c], tpr[c], label=f"class {c} (ROC AUC: {roc_auc[c]:.2g})", lw=2.5)
+ax.legend(fancybox=True, framealpha=0.5)
+ax.set_xlabel("False Positive Rate")
+ax.set_ylabel("True Positive Rate")
+ax.set_title("ROC curve for wine data classification", fontsize=14)
+plt.grid()
+plt.show()
