@@ -188,34 +188,6 @@ class Node(object):
     def children(self):
         return self._children
 
-    def get_child(self, obs):
-        """Return the relevant child instance based on the range the attribute value falls into"""
-
-        if isinstance(obs, pd.DataFrame):
-            if len(obs) > 1:
-                raise ValueError(f"Observation should be a single-line DataFrame (got {len(obs)})")
-            return self._get_child_from_df(obs)
-        elif isinstance(obs, (int, float)):
-            return self._get_child_from_value(obs)
-        else:
-            raise TypeError(f"Observation should be either a single-line DataFrame instance or a number (int, float)")
-
-    def _get_child_from_value(self, attr_value):
-        """Pick the relevant child instance based on the attribute value (assume it is the split attribute)"""
-
-        return self.children[np.searchsorted(self._split_thresholds, attr_value) - 1]
-
-    def _get_child_from_df(self, observation):
-        """Pick the relevant child instance based on a new DataFrame-like object (pick the attribute first)"""
-
-        return self._get_child_from_value(observation[self._split_attribute].item())
-
-    def predict_class(self, observation):
-        if self._terminal:
-            return self._class
-
-        return self._get_child_from_df(observation).predict_class(observation)
-
     def _add_child(self, child):
         if not isinstance(child, type(self)):
             raise TypeError(f"Child should be of type {type(self)}")
@@ -382,16 +354,53 @@ class Node(object):
                 for child in self.children:
                     child.prune(min_points=min_points)
 
-    def test(self, observations: pd.DataFrame):
-        correct = 0
+    def get_child(self, obs):
+        """Return the relevant child instance based on the range the attribute value falls into"""
+
+        if isinstance(obs, pd.DataFrame):
+            if len(obs) > 1:
+                raise ValueError(f"Observation should be a single-line DataFrame (got {len(obs)})")
+            return self._get_child_from_df(obs)
+        elif isinstance(obs, (int, float)):
+            return self._get_child_from_value(obs)
+        else:
+            raise TypeError(f"Observation should be either a single-line DataFrame instance or a number (int, float)")
+
+    def _get_child_from_value(self, attr_value):
+        """Pick the relevant child instance based on the attribute value (assume it is the split attribute)"""
+
+        return self.children[np.searchsorted(self._split_thresholds, attr_value) - 1]
+
+    def _get_child_from_df(self, observation):
+        """Pick the relevant child instance based on a new DataFrame-like object (pick the attribute first)"""
+
+        return self._get_child_from_value(observation[self._split_attribute].item())
+
+    def predict_class(self, observation):
+        if self._terminal:
+            return self._class
+
+        return self._get_child_from_df(observation).predict_class(observation)
+
+    def predict_classes(self, observations: pd.DataFrame):
+        classes = []
+
         n = len(observations)
 
         for i in range(n):
             obs = observations.iloc[i]
-            correct += (self.predict_class(obs) == obs[self.target_attribute])
+            classes.append(self.predict_class(obs))
 
+        return classes
+
+    def test(self, observations: pd.DataFrame):
+        pred_classes = self.predict_classes(observations)               # predicted classes
+        true_classes = observations[self.target_attribute].to_list()    # actual classes
+
+        n = len(true_classes)
+        correct = sum(pred_classes[i] == true_classes[i] for i in range(n))
         score = correct / n
 
         logger.info(f"Testing score: {score} ({correct}/{n} samples)")
 
-        return score
+        return true_classes, pred_classes
