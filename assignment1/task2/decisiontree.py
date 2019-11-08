@@ -432,10 +432,8 @@ class Node(object):
 
         # perform learning
         tree.learn(max_depth=max_depth, n=n)
-        tree.print_terminal_labels()
 
         # prune
         tree.prune(min_points=min_points)
-        tree.print_terminal_labels()
 
         return tree.test(data.iloc[test_idx])

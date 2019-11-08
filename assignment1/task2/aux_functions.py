@@ -4,6 +4,7 @@ import logging
 from sklearn.preprocessing import label_binarize
 from sklearn import metrics
 from sklearn.model_selection import KFold
+from tqdm import tqdm
 
 from decisiontree import Node
 
@@ -54,18 +55,18 @@ def calculate_metrics(labels_true, labels_pred):
     accuracy = cm.trace() / cm.sum()
     f1_score = metrics.f1_score(labels_true, labels_pred, average='micro')
 
-    return cm, accuracy, f1_score
+    return dict(cm=cm, accuracy=accuracy, f1_score=f1_score)
 
 
 def cross_validate_tree(n_splits, data, **kwargs):
     logger.info(f"Decision tree learning and testing with {n_splits}-fold cross validation")
 
-    splitter = KFold(n_splits=n_splits, shuffle=True)
+    splitter = KFold(n_splits=n_splits, shuffle=True, random_state=0)
 
     test_labels_true = []
     test_labels_pred = []
 
-    for i, (train_idx, test_idx) in enumerate(splitter.split(data)):
+    for i, (train_idx, test_idx) in tqdm(enumerate(splitter.split(data))):
         logger.info(f"Cross-validation round {i} with {len(train_idx)} train samples and {len(test_idx)} test samples")
         logger.debug(f"Test indices: {test_idx}")
 
