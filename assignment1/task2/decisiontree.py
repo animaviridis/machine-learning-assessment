@@ -14,7 +14,6 @@ class Node(object):
                  indices=None, terminal=False, parent=None, which_child=0):
 
         self._level = level
-        self._depth = 0
         self._terminal = terminal
         self._class = None
 
@@ -71,7 +70,7 @@ class Node(object):
         if self._split_attribute:
             split = f"; split at attribute '{self._split_attribute}' with thresholds: {self._split_thresholds[1:-1]}"
 
-        sub = f'; subtree depth: {self._depth}' if len(self._children) else ''
+        sub = f'; subtree depth: {self.depth}' if len(self._children) else ''
 
         return f"Level {self.level} tree node ({root}); {'' if self.resolved else 'not '}resolved {leaf}{sub}{split}"
 
@@ -89,7 +88,10 @@ class Node(object):
 
     @property
     def depth(self):
-        return self._depth
+        if self.children:
+            return max(child.depth for child in self.children) + 1
+
+        return 0
 
     @property
     def indices_distributed(self):
@@ -345,12 +347,8 @@ class Node(object):
         self.split(**kwargs)
 
         logger.debug(f"Learning children of node {self.trace()}")
-        depths = []
         for child in self.children:
-            depths.append(child.learn(max_depth=max_depth-1, **kwargs))
-
-        self._depth = max(depths)
-        return self._depth + 1
+            child.learn(max_depth=max_depth-1, **kwargs)
 
     def print_terminal_labels(self):
         if len(self.children):
