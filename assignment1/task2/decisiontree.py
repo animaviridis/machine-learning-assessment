@@ -14,7 +14,9 @@ class Node(object):
                  indices=None, terminal=False, parent=None, which_child=0):
 
         self._level = level
-        self.terminal = terminal
+        self._depth = 0
+        self._terminal = terminal
+        self._class = None
 
         if level and not parent:
             raise ValueError(f"Non-root node (level {level}) must have a parent")
@@ -63,13 +65,15 @@ class Node(object):
         else:
             root = 'root'
 
-        leaf = '(leaf)' if self.terminal else f'with {len(self.children)} children'
+        leaf = '(leaf)' if self._terminal else f'with {len(self.children)} children'
 
         split = ""
         if self._split_attribute:
-            split = f", split at attribute '{self._split_attribute}' with thresholds: {self._split_thresholds[1:-1]}"
+            split = f"; split at attribute '{self._split_attribute}' with thresholds: {self._split_thresholds[1:-1]}"
 
-        return f"Level {self.level} tree node ({root}); {'' if self.resolved else 'not '}resolved {leaf}{split}"
+        sub = f'; subtree depth: {self._depth}' if len(self._children) else ''
+
+        return f"Level {self.level} tree node ({root}); {'' if self.resolved else 'not '}resolved {leaf}{sub}{split}"
 
     @property
     def full_data(self):
@@ -82,6 +86,10 @@ class Node(object):
     @property
     def level(self):
         return self._level
+
+    @property
+    def depth(self):
+        return self._depth
 
     @property
     def indices_distributed(self):
@@ -97,7 +105,7 @@ class Node(object):
 
     @property
     def resolved(self):
-        return True if (self.terminal or not self._indices_remaining) else False
+        return True if (self._terminal or not self._indices_remaining) else False
 
     @property
     def split_thresholds(self):
@@ -130,9 +138,21 @@ class Node(object):
     def class_labels(self):
         return self.data[self.target_attribute]
 
+    @property
+    def n_classes(self):
+        return len(set(self.class_labels))
+
+    @property
+    def uniform(self):
+        return self.n_classes == 1
+
     @staticmethod
-    def get_label_occurrences(labels):
+    def get_label_occurrences(labels: list):
         return [labels.count(c) for c in set(labels)]
+
+    @staticmethod
+    def get_prevalent_label(labels: list):
+        return list(set(labels))[np.argmax(Node.get_label_occurrences(labels))]
 
     @staticmethod
     def calculate_entropy_probs(probs):
@@ -266,7 +286,8 @@ class Node(object):
 
         chosen_gain = gains[idx]
         chosen_threshold = th_cand[idx]
-        logger.debug(f"For attribute {attribute}, best gain is {chosen_gain:.2g} (at threshold {chosen_threshold:.3g})")
+        logger.debug(f"For attribute '{attribute}', best gain is {chosen_gain:.2g} "
+                     f"(at threshold {chosen_threshold:.3g})")
 
         return chosen_gain, chosen_threshold
 
@@ -289,3 +310,36 @@ class Node(object):
         s = self.choose_split_attribute(**kwargs)
         logger.info(f"Splitting at attribute '{s[0]}' with threshold: {s[1][0]:.2g}")
         self.split_at(*s)
+
+    def terminate(self):
+        self._terminal = True
+        self._class = self.get_prevalent_label(self.class_labels.to_list())
+
+    def learn(self, max_depth=5, **kwargs):
+        if max_depth < 0:
+            raise ValueError(f"Invalid maximal depth ({max_depth})")
+
+        if max_depth == 0:
+            logger.info(f"Reached the maximal depth (at {self}) - no further splitting")
+            self.terminate()
+            return 1
+
+        if self.uniform:
+            logger.info(f"{self} is an uniform node - no further splitting")
+            self.terminate()
+            return 1
+
+        if self._terminal:
+            logger.info(f"Splitting a node previously marked as terminal: {self}")
+            self._terminal = False
+
+        logger.info(f"Performing split of {self}")
+        self.split(**kwargs)
+
+        logger.debug(f"Learning children of {self}")
+        depths = []
+        for child in self.children:
+            depths.append(child.learn(max_depth=max_depth-1, **kwargs))
+
+        self._depth = max(depths)
+        return self._depth + 1
