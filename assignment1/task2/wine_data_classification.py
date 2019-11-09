@@ -60,11 +60,11 @@ print(gs(rf, rf_params))
 # shallow NN
 logger.info("Tuning shallow NN classifier")
 snn = MLPClassifier()
-snn_params = dict(hidden_layer_sizes=[(10,), (20,), (50,)], alpha=[0.001, 0.0001, 0.00001])
+snn_params = dict(hidden_layer_sizes=[(100,), (200,), (500,)], alpha=[0.001, 0.0001, 0.00001])
 print(gs(snn, snn_params))
 
 # deep NN
 logger.info("Tuning deep NN classifier")
 dnn = MLPClassifier()
-dnn_params = dict(hidden_layer_sizes=[50*(10,), 25*(20,), 10*(50,)], alpha=[0.001, 0.0001, 0.00001])
+dnn_params = dict(hidden_layer_sizes=[100*(10,), 50*(20,), 20*(50,)], alpha=[0.001, 0.0001, 0.00001])
 print(gs(dnn, dnn_params))
