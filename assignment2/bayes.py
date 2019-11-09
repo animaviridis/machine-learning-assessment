@@ -6,8 +6,10 @@ import aux_functions as aux
 PRINT_ERRORS = 0
 
 
-def trainBayes(sentences_train):
-    """calculates p(W|Positive), p(W|Negative) and p(W) for all words in training data"""
+def trainBayes(sentences_train, n=1):
+    """calculates p(W|Positive), p(W|Negative) and p(W) for all words in training data
+
+    n: n-grams (1 for words, 2 for bigrams, etc)"""
 
     p_word_pos = {}  # p(W|Positive)
     p_word_neg = {}  # p(W|Negative)
@@ -22,26 +24,11 @@ def trainBayes(sentences_train):
 
     # iterate through each sentence/sentiment pair in the training data
     for sentence, sentiment in sentences_train.items():
-        wordList = re.findall(r"[\w']+", sentence)
 
-        # TODO:
-        # Populate bigramList (initialised below) by concatenating adjacent words in the sentence.
-        # You might want to seperate the words by _ for readability, so bigrams such as:
-        # You_might, might_want, want_to, to_seperate....
+        # create list of n-grams by concatenating adjacent words in the sentence (separating them by '_')
+        ngram_list = aux.make_n_grams(sentence, n=n)
 
-        bigramList = wordList.copy()  # initialise bigramList
-        for x in range(len(wordList) - 1):
-            bigramList.append(wordList[x] + "_" + wordList[x + 1])
-
-        # -------------Finish populating bigramList ------------------#
-
-        # TODO:
-        #  when you have populated bigramList,
-        #  uncomment out the line below and ,
-        #  and comment out the unigram line to make use of bigramList rather than wordList
-
-        for word in bigramList:  # calculate over bigrams
-            # for word in wordList:  # calculate over unigrams
+        for word in ngram_list:
             all_words_tot += 1  # keeps count of total words in dataset
             if not (word in dictionary):
                 dictionary[word] = 1
@@ -81,7 +68,7 @@ def trainBayes(sentences_train):
     return p_word_pos, p_word_neg, p_word
 
 
-def testBayes(sentencesTest, dataName, pWordPos, pWordNeg, pWord, pPos):
+def testBayes(sentencesTest, dataName, pWordPos, pWordNeg, pWord, pPos, n=1):
     """INPUTS:
      sentencesTest is a dictionary with sentences associated with sentiment
      dataName is a string (used only for printing output)
@@ -106,20 +93,13 @@ def testBayes(sentencesTest, dataName, pWordPos, pWordNeg, pWord, pPos):
 
     # for each sentence, sentiment pair in the dataset
     for sentence, sentiment in sentencesTest.items():
-        wordList = re.findall(r"[\w']+", sentence)  # collect all words
+        # create list of n-grams by concatenating adjacent words in the sentence (separating them by '_')
+        ngram_list = aux.make_n_grams(sentence, n=n)
 
-        # TODO: Exactly what you did in the training function:
-        # Populate bigramList by concatenating adjacent words in wordList.
-
-        bigramList = wordList.copy()  # initialise bigramList
-        for x in range(len(wordList) - 1):
-            bigramList.append(wordList[x] + "_" + wordList[x + 1])
-
-        # ------------------finished populating bigramList--------------
         pPosW = pPos
         pNegW = pNeg
 
-        for word in bigramList:  # calculate over bigrams
+        for word in ngram_list:  # calculate over bigrams
             # for word in wordList:  # calculate over unigrams
             if word in pWord:
                 if pWord[word] > 0.00000001:

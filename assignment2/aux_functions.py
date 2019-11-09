@@ -91,3 +91,8 @@ def report_metrics(data_name, posneg, correct, total, total_pred):
     print(f"{data_name} Precision ({posneg})={precision:.2f}"  + " (%d" % correct + "/%d" % total_pred + ")")
     print(f"{data_name} Recall ({posneg})={recall:.2f}" + " (%d" % correct + "/%d" % total + ")")
     print(f"{data_name} F-measure ({posneg})={f_score:.2f}")
+
+
+def make_n_grams(sentence, n=2, sep='_'):
+    word_list = re.findall(r"[\w']+", sentence)  # collect all words
+    return [sep.join(word_list[i:i+n]) for i in range(len(word_list)-n+1)]
