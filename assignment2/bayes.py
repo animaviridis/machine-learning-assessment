@@ -4,8 +4,12 @@ import re
 PRINT_ERRORS = 0
 
 
-def trainBayes(sentences_train, p_word_pos, p_word_neg, p_word):
+def trainBayes(sentences_train):
     """calculates p(W|Positive), p(W|Negative) and p(W) for all words in training data"""
+
+    p_word_pos = {}  # p(W|Positive)
+    p_word_neg = {}  # p(W|Negative)
+    p_word = {}  # p(W)
 
     freq_positive = {}
     freq_negative = {}
@@ -72,7 +76,7 @@ def trainBayes(sentences_train, p_word_pos, p_word_neg, p_word):
         # Calculate p(word)
         p_word[word] = (freq_positive[word] + freq_negative[word]) / float(all_words_tot)
 
-    # implement naive bayes algorithm
+    return p_word_pos, p_word_neg, p_word
 
 
 def testBayes(sentencesTest, dataName, pWordPos, pWordNeg, pWord, pPos):

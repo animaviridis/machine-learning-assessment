@@ -7,12 +7,8 @@ import rule_based
 # initialise datasets and dictionaries
 sentimentDictionary, sentencesTrain, sentencesTest, sentencesNokia = aux.read_files()
 
-pWordPos = {}  # p(W|Positive)
-pWordNeg = {}  # p(W|Negative)
-pWord = {}     # p(W) 
-
 # build conditional probabilities using training data
-bayes.trainBayes(sentencesTrain, pWordPos, pWordNeg, pWord)
+pWordPos, pWordNeg, pWord = bayes.trainBayes(sentencesTrain)
 
 # run naive bayes classifier on datasets
 # print("Naive Bayes")
