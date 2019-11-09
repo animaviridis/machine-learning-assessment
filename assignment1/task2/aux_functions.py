@@ -41,6 +41,7 @@ def plot_roc_curve(fpr: dict, tpr: dict, roc_auc: dict, title=None):
     ax.legend(fancybox=True, framealpha=0.5)
     ax.set_xlabel("False Positive Rate")
     ax.set_ylabel("True Positive Rate")
+    ax.set_aspect('equal')
     ax.set_title(title or "ROC curves", fontsize=14)
     plt.grid()
     plt.show()
@@ -85,7 +86,7 @@ def cross_validate_sklearn(estimator, n_splits, data_x, data_y):
     test_labels_true = []
     test_labels_pred = []
 
-    for i, (train_idx, test_idx) in tqdm(enumerate(splitter.split(data_x))):
+    for i, (train_idx, test_idx) in enumerate(splitter.split(data_x)):
         logger.debug(f"Cross-validation round {i} with {len(train_idx)} train samples and {len(test_idx)} test samples")
         logger.debug(f"Test indices: {test_idx}")
 
