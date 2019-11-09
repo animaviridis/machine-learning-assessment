@@ -57,3 +57,20 @@ def read_files():
 
     return sentiment_dictionary, sentences_train, sentences_test, sentences_nokia
 
+
+def mostUseful(pWordPos, pWordNeg, pWord, n):
+    """Print out n most useful predictors"""
+
+    predictPower = {}
+    for word in pWord:
+        if pWordNeg[word] < 0.0000001:
+            predictPower[word] = 1000000000
+        else:
+            predictPower[word] = pWordPos[word] / (pWordPos[word] + pWordNeg[word])
+
+    sortedPower = sorted(predictPower, key=predictPower.get)
+    head, tail = sortedPower[:n], sortedPower[len(predictPower) - n:]
+    print("NEGATIVE:")
+    print(head)
+    print("\nPOSITIVE:")
+    print(tail)
