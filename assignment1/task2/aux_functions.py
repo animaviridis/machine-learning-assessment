@@ -105,7 +105,7 @@ def tune_params(func, params, func_args=(), func_kwargs=None, scoring_metrics='m
 
     for params_i in tqdm(params_prod):
         params_i_dict = dict(zip(params_keys, params_i))
-        xv = func(*func_args, **func_kwargs)
+        xv = func(*func_args, **func_kwargs, **params_i_dict)
         params_i_dict.update(xv if isinstance(xv, dict) else {'metrics': xv})
         results.append(params_i_dict)
 
