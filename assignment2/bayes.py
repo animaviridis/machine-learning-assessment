@@ -1,5 +1,7 @@
 import re
 
+import aux_functions as aux
+
 
 PRINT_ERRORS = 0
 
@@ -155,17 +157,5 @@ def testBayes(sentencesTest, dataName, pWordPos, pWordNeg, pWord, pPos):
     acc = correct / float(total)
     print(dataName + " Accuracy (All)=%0.2f" % acc + " (%d" % correct + "/%d" % total + ")\n")
 
-    precision_pos = correctpos / float(totalpospred)
-    recall_pos = correctpos / float(totalpos)
-    precision_neg = correctneg / float(totalnegpred)
-    recall_neg = correctneg / float(totalneg)
-    f_pos = 2 * precision_pos * recall_pos / (precision_pos + recall_pos)
-    f_neg = 2 * precision_neg * recall_neg / (precision_neg + recall_neg)
-
-    print(dataName + " Precision (Pos)=%0.2f" % precision_pos + " (%d" % correctpos + "/%d" % totalpospred + ")")
-    print(dataName + " Recall (Pos)=%0.2f" % recall_pos + " (%d" % correctpos + "/%d" % totalpos + ")")
-    print(dataName + " F-measure (Pos)=%0.2f" % f_pos)
-
-    print(dataName + " Precision (Neg)=%0.2f" % precision_neg + " (%d" % correctneg + "/%d" % totalnegpred + ")")
-    print(dataName + " Recall (Neg)=%0.2f" % recall_neg + " (%d" % correctneg + "/%d" % totalneg + ")")
-    print(dataName + " F-measure (Neg)=%0.2f" % f_neg + "\n")
+    aux.report_metrics(dataName, 'Pos', correctpos, totalpos, totalpospred)
+    aux.report_metrics(dataName, 'Pos', correctneg, totalneg, totalnegpred)

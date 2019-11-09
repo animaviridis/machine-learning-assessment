@@ -74,3 +74,20 @@ def mostUseful(pWordPos, pWordNeg, pWord, n):
     print(head)
     print("\nPOSITIVE:")
     print(tail)
+
+
+def compute_metrics(correct, total, total_pred):
+    """Compute precision, recall, and F1 score with add-one smoothing"""
+
+    precision = (correct + 1) / (total_pred + 1)
+    recall = (correct + 1) / (total + 1)
+    f_score = 2 * precision * recall / (precision + recall)
+
+    return precision, recall, f_score
+
+
+def report_metrics(data_name, posneg, correct, total, total_pred):
+    precision, recall, f_score = compute_metrics(correct, total, total_pred)
+    print(f"{data_name} Precision ({posneg})={precision:.2f}"  + " (%d" % correct + "/%d" % total_pred + ")")
+    print(f"{data_name} Recall ({posneg})={recall:.2f}" + " (%d" % correct + "/%d" % total + ")")
+    print(f"{data_name} F-measure ({posneg})={f_score:.2f}")
