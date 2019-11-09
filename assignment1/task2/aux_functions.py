@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import logging
 from sklearn.preprocessing import label_binarize
 from sklearn import metrics
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, GridSearchCV
 from tqdm import tqdm
 import itertools
 
@@ -79,6 +79,23 @@ def cross_validate_tree(n_splits, data, **kwargs):
     return calculate_metrics(test_labels_true, test_labels_pred)
 
 
+def cross_validate_sklearn(estimator, n_splits, data_x, data_y):
+    splitter = KFold(n_splits=n_splits, shuffle=True, random_state=0)
+
+    test_labels_true = []
+    test_labels_pred = []
+
+    for i, (train_idx, test_idx) in tqdm(enumerate(splitter.split(data_x))):
+        logger.debug(f"Cross-validation round {i} with {len(train_idx)} train samples and {len(test_idx)} test samples")
+        logger.debug(f"Test indices: {test_idx}")
+
+        test_labels_true.extend(data_y[test_idx])
+        test_labels_pred.extend(estimator.fit(data_x.loc[train_idx], data_y[train_idx]).predict(data_x.loc[test_idx]))
+
+    calculate_and_plot_roc(test_labels_true, test_labels_pred, title="ROC curves for wine data classification")
+    return calculate_metrics(test_labels_true, test_labels_pred)
+
+
 def tune_params(func, params, func_args=(), func_kwargs=None, scoring_metrics='metrics'):
     func_kwargs = func_kwargs or {}
     results = []
@@ -94,3 +111,12 @@ def tune_params(func, params, func_args=(), func_kwargs=None, scoring_metrics='m
 
     best_result = results[int(np.argmax([t[scoring_metrics] for t in results]))]
     return results, best_result
+
+
+def make_grid_searcher(data_x, data_y, n_splits=10):
+    def wrapper(estimator, params):
+        gscv = GridSearchCV(estimator, params, cv=n_splits)
+        res = gscv.fit(data_x, data_y)
+        res_stats = cross_validate_sklearn(res.best_estimator_, n_splits=n_splits, data_x=data_x, data_y=data_y)
+        return res.best_params_, res_stats
+    return wrapper
