@@ -79,7 +79,7 @@ def cross_validate_tree(n_splits, data, **kwargs):
     return calculate_metrics(test_labels_true, test_labels_pred)
 
 
-def tune_params(func, params, func_args=(), func_kwargs=None):
+def tune_params(func, params, func_args=(), func_kwargs=None, scoring_metrics='metrics'):
     func_kwargs = func_kwargs or {}
     results = []
 
@@ -92,5 +92,5 @@ def tune_params(func, params, func_args=(), func_kwargs=None):
         params_i_dict.update(xv if isinstance(xv, dict) else {'metrics': xv})
         results.append(params_i_dict)
 
-    best_result = results[int(np.argmax([t['f1_score'] for t in results]))]
+    best_result = results[int(np.argmax([t[scoring_metrics] for t in results]))]
     return results, best_result

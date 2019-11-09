@@ -3,8 +3,6 @@ import numpy as np
 import pandas as pd
 import logging
 import coloredlogs
-import itertools
-from tqdm import tqdm
 
 import aux_functions as aux
 
@@ -33,7 +31,8 @@ df_input = pd.read_csv(data_fname, names=headers)
 N_SPLITS = 10
 tree_params = dict(max_depth=range(3, 10), min_points=range(1, 5))
 
-all_results, best_result = aux.tune_params(aux.cross_validate_tree, tree_params, func_args=(N_SPLITS, df_input))
+all_results, best_result = aux.tune_params(aux.cross_validate_tree, tree_params, func_args=(N_SPLITS, df_input),
+                                           scoring_metrics='f1_score')
 print(all_results)
 print("Best result: ", best_result)
 
