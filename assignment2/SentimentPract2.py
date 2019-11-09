@@ -5,65 +5,9 @@ import math
 import collections
 import itertools
 
+import io_functions
+
 PRINT_ERRORS = 0
-
-# ------------- Function Definitions ---------------------
-
-
-def readFiles(sentimentDictionary,sentencesTrain,sentencesTest,sentencesNokia):
-
-    #reading pre-labeled input and splitting into lines
-    posSentences = open('rt-polarity-pos.txt', 'r', encoding="ISO-8859-1")
-    posSentences = re.split(r'\n', posSentences.read())
-
-    negSentences = open('rt-polarity-neg.txt', 'r', encoding="ISO-8859-1")
-    negSentences = re.split(r'\n', negSentences.read())
-
-    posSentencesNokia = open('nokia-pos.txt', 'r')
-    posSentencesNokia = re.split(r'\n', posSentencesNokia.read())
-
-    negSentencesNokia = open('nokia-neg.txt', 'r', encoding="ISO-8859-1")
-    negSentencesNokia = re.split(r'\n', negSentencesNokia.read())
- 
-    posDictionary = open('positive-words.txt', 'r', encoding="ISO-8859-1")
-    posWordList = posDictionary.readlines()
-    posWordList = [line.strip() for line in posWordList if not line.startswith(";") and not line == '\n']
-    #posWordList = re.findall(r"[a-z\-]+", posDictionary.read())
-
-    negDictionary = open('negative-words.txt', 'r', encoding="ISO-8859-1")
-    negWordList = negDictionary.readlines()
-    negWordList = [line.strip() for line in negWordList if not line.startswith(";") and not line == '\n']
-    # negWordList = re.findall(r"[a-z\-]+", negDictionary.read())
-
-    for i in posWordList:
-        sentimentDictionary[i] = 1
-    for i in negWordList:
-        sentimentDictionary[i] = -1
-
-    # create Training and Test Datsets:
-    # We want to test on sentences we haven't trained on, to see how well
-    # the model generalses to previously unseen sentences
-
-    # create 90-10 split of training and test data from movie reviews, with sentiment labels    
-    for i in posSentences:
-        if random.randint(1, 10) < 2:
-            sentencesTest[i] = "positive"
-        else:
-            sentencesTrain[i] = "positive"
-
-    for i in negSentences:
-        if random.randint(1, 10) <2:
-            sentencesTest[i] = "negative"
-        else:
-            sentencesTrain[i] = "negative"
-
-    # create Nokia Datset:
-    for i in posSentencesNokia:
-            sentencesNokia[i] = "positive"
-    for i in negSentencesNokia:
-            sentencesNokia[i] = "negative"
-
-# ----------------------------End of data initialisation ----------------#
 
 
 # calculates p(W|Positive), p(W|Negative) and p(W) for all words in training data
@@ -140,7 +84,7 @@ def trainBayes(sentencesTrain, pWordPos, pWordNeg, pWord):
 
 # implement naive bayes algorithm
 # INPUTS:
-#  sentencesTest is a dictionary with sentences associated with sentiment 
+#  sentencesTest is a dictionary with sentences associated with sentiment
 #  dataName is a string (used only for printing output)
 #  pWordPos is dictionary storing p(word|positive) for each word
 #     i.e., pWordPos["apple"] will return a real value for p("apple"|positive)
@@ -294,10 +238,10 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
 def mostUseful(pWordPos, pWordNeg, pWord, n):
     predictPower={}
     for word in pWord:
-        if pWordNeg[word]<0.0000001:
-            predictPower[word]=1000000000
+        if pWordNeg[word] < 0.0000001:
+            predictPower[word] = 1000000000
         else:
-            predictPower[word]=pWordPos[word] / (pWordPos[word] + pWordNeg[word])
+            predictPower[word] = pWordPos[word] / (pWordPos[word] + pWordNeg[word])
             
 
     sortedPower = sorted(predictPower, key=predictPower.get)
@@ -310,14 +254,8 @@ def mostUseful(pWordPos, pWordNeg, pWord, n):
 
 # ---------- Main Script --------------------------
 
-
-sentimentDictionary = {}  # {} initialises a dictionary [hash function]
-sentencesTrain = {}
-sentencesTest = {}
-sentencesNokia = {}
-
 # initialise datasets and dictionaries
-readFiles(sentimentDictionary,sentencesTrain,sentencesTest,sentencesNokia)
+sentimentDictionary, sentencesTrain, sentencesTest, sentencesNokia = io_functions.read_files()
 
 pWordPos = {}  # p(W|Positive)
 pWordNeg = {}  # p(W|Negative)
