@@ -19,9 +19,22 @@ class RuleBasedSentimentAnalyser(object):
 
         words = re.findall(r"[\w']+", sentence)
         score = 0
+        flag = 1
+
         for word in words:
             if word in self.sentiment_dictionary:
-                score += self.sentiment_dictionary[word]
+                # update the score according to sentiment associated with the given word
+                score += flag * self.sentiment_dictionary[word]
+                flag = 1
+
+            elif word in self.but_words:
+                # invert and rescale the score for the first part of the sentence
+                # the part after a 'but' is likely to carry opposite sentiment, more important to the opinion holder
+                score = - 0.5*score
+
+            elif word in self.negation_words:
+                # make the next known word carry opposite sentiments
+                flag = -1
 
         return score, score >= self.threshold
 
@@ -37,8 +50,8 @@ class RuleBasedSentimentAnalyser(object):
             sentiments_pred[i] = int(sentiment_pred)
 
             if self.print_errors:
-                if sentiments_pred != sentiment_true:
-                    print(f"ERROR ({pn(sentiment_true)} classed as {pn(sentiments_pred)}, score={score}): {sentence}")
+                if sentiments_pred[i] != sentiments_true[i]:
+                    print(f"ERROR ({pn(sentiment_true)} classed as {pn(sentiment_pred)}, score={score}): {sentence}")
 
         self.report_results(data_name, sentiments_true, sentiments_pred)
 
