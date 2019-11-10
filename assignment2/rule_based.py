@@ -4,6 +4,8 @@ import re
 import aux_functions as aux
 
 
+PRINT_ERRORS = 1
+
 
 def testDictionary(sentences_test, data_name, sentiment_dictionary, threshold):
     """This is a simple classifier that uses a sentiment dictionary to classify
@@ -37,6 +39,8 @@ def testDictionary(sentences_test, data_name, sentiment_dictionary, threshold):
                 totalpospred += 1
             else:
                 totalnegpred += 1
+                if PRINT_ERRORS:
+                    print(f"ERROR (pos classed as neg, score={score}): {sentence}")
         else:
             totalneg += 1
             if score < threshold:
@@ -45,6 +49,8 @@ def testDictionary(sentences_test, data_name, sentiment_dictionary, threshold):
                 totalnegpred += 1
             else:
                 totalpospred += 1
+                if PRINT_ERRORS:
+                    print(f"ERROR (neg classed as pos, score={score}): {sentence}")
 
     acc = correct / float(total)
     print(data_name + " Accuracy (All)=%0.2f" % acc + " (%d" % correct + "/%d" % total + ")\n")

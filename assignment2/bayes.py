@@ -1,9 +1,7 @@
-import re
-
 import aux_functions as aux
 
 
-PRINT_ERRORS = 0
+PRINT_ERRORS = 1
 
 
 def trainBayes(sentences_train, n=1):
