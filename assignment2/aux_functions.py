@@ -70,10 +70,8 @@ def mostUseful(pWordPos, pWordNeg, pWord, n):
 
     sortedPower = sorted(predictPower, key=predictPower.get)
     head, tail = sortedPower[:n], sortedPower[len(predictPower) - n:]
-    print("NEGATIVE:")
-    print(head)
-    print("\nPOSITIVE:")
-    print(tail)
+
+    return {'NEGATIVE': head, 'POSITIVE': tail}
 
 
 def compute_metrics(correct, total, total_pred):
