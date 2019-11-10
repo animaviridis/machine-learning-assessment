@@ -138,4 +138,4 @@ def testBayes(sentencesTest, dataName, pWordPos, pWordNeg, pWord, pPos, n=1):
     print(dataName + " Accuracy (All)=%0.2f" % acc + " (%d" % correct + "/%d" % total + ")\n")
 
     aux.report_metrics(dataName, 'Pos', correctpos, totalpos, totalpospred)
-    aux.report_metrics(dataName, 'Pos', correctneg, totalneg, totalnegpred)
+    aux.report_metrics(dataName, 'Neg', correctneg, totalneg, totalnegpred)

@@ -49,4 +49,4 @@ def testDictionary(sentences_test, data_name, sentiment_dictionary, threshold):
     acc = correct / float(total)
     print(data_name + " Accuracy (All)=%0.2f" % acc + " (%d" % correct + "/%d" % total + ")\n")
     aux.report_metrics(data_name, 'Pos', correctpos, totalpos, totalpospred)
-    aux.report_metrics(data_name, 'Pos', correctneg, totalneg, totalnegpred)
+    aux.report_metrics(data_name, 'Neg', correctneg, totalneg, totalnegpred)
