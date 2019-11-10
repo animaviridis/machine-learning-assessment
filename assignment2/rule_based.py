@@ -4,10 +4,7 @@ import re
 import aux_functions as aux
 
 
-PRINT_ERRORS = 1
-
-
-def testDictionary(sentences_test, data_name, sentiment_dictionary, threshold):
+def testDictionary(sentences_test, data_name, sentiment_dictionary, threshold, print_errors=False):
     """This is a simple classifier that uses a sentiment dictionary to classify
     a sentence. For each word in the sentence, if the word is in the positive
     dictionary, it adds 1, if it is in the negative dictionary, it subtracts 1.
@@ -39,7 +36,7 @@ def testDictionary(sentences_test, data_name, sentiment_dictionary, threshold):
                 totalpospred += 1
             else:
                 totalnegpred += 1
-                if PRINT_ERRORS:
+                if print_errors:
                     print(f"ERROR (pos classed as neg, score={score}): {sentence}")
         else:
             totalneg += 1
@@ -49,7 +46,7 @@ def testDictionary(sentences_test, data_name, sentiment_dictionary, threshold):
                 totalnegpred += 1
             else:
                 totalpospred += 1
-                if PRINT_ERRORS:
+                if print_errors:
                     print(f"ERROR (neg classed as pos, score={score}): {sentence}")
 
     acc = correct / float(total)

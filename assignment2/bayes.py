@@ -1,9 +1,6 @@
 import aux_functions as aux
 
 
-PRINT_ERRORS = 1
-
-
 def trainBayes(sentences_train, n=1):
     """calculates p(W|Positive), p(W|Negative) and p(W) for all words in training data
 
@@ -66,7 +63,7 @@ def trainBayes(sentences_train, n=1):
     return p_word_pos, p_word_neg, p_word
 
 
-def testBayes(sentencesTest, dataName, pWordPos, pWordNeg, pWord, pPos, n=1):
+def testBayes(sentencesTest, dataName, pWordPos, pWordNeg, pWord, pPos, n=1, print_errors=False):
     """INPUTS:
      sentencesTest is a dictionary with sentences associated with sentiment
      dataName is a string (used only for printing output)
@@ -118,7 +115,7 @@ def testBayes(sentencesTest, dataName, pWordPos, pWordNeg, pWord, pPos, n=1):
             else:
                 correct += 0
                 totalnegpred += 1
-                if PRINT_ERRORS:
+                if print_errors:
                     print("ERROR (pos classed as neg %0.2f):" % prob + sentence)
         else:
             totalneg += 1
@@ -129,7 +126,7 @@ def testBayes(sentencesTest, dataName, pWordPos, pWordNeg, pWord, pPos, n=1):
             else:
                 correct += 0
                 totalpospred += 1
-                if PRINT_ERRORS:
+                if print_errors:
                     print("ERROR (neg classed as pos %0.2f):" % prob + sentence)
 
     acc = correct / float(total)
