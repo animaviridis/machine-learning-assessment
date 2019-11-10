@@ -1,6 +1,7 @@
 no
 not
 none
+never
 don't
 doesn't
 aren't
@@ -13,7 +14,9 @@ won't
 wouldn't
 can't
 cannot
+n't
 though
 although
 despite
 regardless
+too

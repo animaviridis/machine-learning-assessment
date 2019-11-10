@@ -31,6 +31,7 @@ class RuleBasedSentimentAnalyser(object):
                 # invert and rescale the score for the first part of the sentence
                 # the part after a 'but' is likely to carry opposite sentiment, more important to the opinion holder
                 score = - 0.5*score
+                flag = 1
 
             elif word in self.negation_words:
                 # make the next known word carry opposite sentiments
@@ -45,13 +46,14 @@ class RuleBasedSentimentAnalyser(object):
         def pn(val):
             return 'pos' if val else 'neg'
 
-        for i, (sentence, sentiment_true) in enumerate(sentences_test.items()):
-            score, sentiment_pred = self.evaluate_sentence(sentence)
-            sentiments_pred[i] = int(sentiment_pred)
+        for i, sentence in enumerate(sentences_test.keys()):
+            s_true = sentiments_true[i]
+            score, s_pred = self.evaluate_sentence(sentence)
+            sentiments_pred[i] = int(s_pred)
 
             if self.print_errors:
-                if sentiments_pred[i] != sentiments_true[i]:
-                    print(f"ERROR ({pn(sentiment_true)} classed as {pn(sentiment_pred)}, score={score}): {sentence}")
+                if s_pred != bool(s_true):
+                    print(f"ERROR ({pn(s_true)} classed as {pn(s_pred)}, score={score}): {sentence}")
 
         self.report_results(data_name, sentiments_true, sentiments_pred)
 
