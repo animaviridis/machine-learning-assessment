@@ -13,3 +13,7 @@ won't
 wouldn't
 can't
 cannot
+though
+although
+despite
+regardless

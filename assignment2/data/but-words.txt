@@ -4,3 +4,5 @@ however
 yet
 nevertheless
 still
+nonetheless
+notwithstanding
