@@ -23,7 +23,7 @@ class RuleBasedSentimentAnalyser(object):
             if word in self.sentiment_dictionary:
                 score += self.sentiment_dictionary[word]
 
-        return score, score > self.threshold
+        return score, score >= self.threshold
 
     def evaluate(self, sentences_test: dict, data_name: str):
         sentiments_true = list(map(lambda s: int(s == 'positive'), sentences_test.values()))
@@ -34,6 +34,7 @@ class RuleBasedSentimentAnalyser(object):
 
         for i, (sentence, sentiment_true) in enumerate(sentences_test.items()):
             score, sentiment_pred = self.evaluate_sentence(sentence)
+            sentiments_pred[i] = int(sentiment_pred)
 
             if self.print_errors:
                 if sentiments_pred != sentiment_true:
