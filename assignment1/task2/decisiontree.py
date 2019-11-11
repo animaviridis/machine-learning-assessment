@@ -56,13 +56,13 @@ class Node(object):
         self._split_attribute = None
         self._split_thresholds = []
 
-        if not level:
-            indices = set(data.index)
-        else:
-            if indices is None:
-                raise ValueError("indices=None not allowed for a non-root node (use empty set if necessary)")
+        if indices is None:
+            if not level:
+                indices = set(data.index)
             else:
-                indices = set(indices)
+                raise ValueError("indices=None not allowed for a non-root node (use empty set if necessary)")
+        else:
+            indices = set(indices)
 
         self._indices_distributed = set()
         self._indices_remaining = indices
