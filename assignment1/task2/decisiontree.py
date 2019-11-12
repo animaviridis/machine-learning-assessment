@@ -9,8 +9,29 @@ logger = logging.getLogger(__name__)
 
 
 class Node(object):
+    """Node - a basic element of a decision tree structure."""
+
     def __init__(self, data: pd.DataFrame, target_column=0, level: int=0,
                  indices=None, terminal=False, parent=None, which_child=0):
+        """Initialise a tree node.
+
+        Parameters
+        ----------
+        data            :   pd.DataFrame
+            data frame containing all attributes (including the target attribute) for the training set
+        target_column   :   int
+            index of a column containing the target variable
+        level           :   int
+            node level (0 for a root)
+        indices         :   iterable
+            set of sample indices belonging to the given node (as distributed by the parent)
+        terminal        :   bool
+            True if a node should be a leaf (not for further splitting)
+        parent          :   Node
+            the parent instance
+        which_child     :   0
+            which child in a row is the current instance from the point of view of the parent
+        """
 
         self._level = level
         self._terminal = terminal
@@ -35,13 +56,13 @@ class Node(object):
         self._split_attribute = None
         self._split_thresholds = []
 
-        if not level:
-            indices = set(data.index)
-        else:
-            if indices is None:
-                raise ValueError("indices=None not allowed for a non-root node (use empty set if necessary)")
+        if indices is None:
+            if not level:
+                indices = set(data.index)
             else:
-                indices = set(indices)
+                raise ValueError("indices=None not allowed for a non-root node (use empty set if necessary)")
+        else:
+            indices = set(indices)
 
         self._indices_distributed = set()
         self._indices_remaining = indices
@@ -153,10 +174,14 @@ class Node(object):
 
     @staticmethod
     def get_label_occurrences(labels: list):
+        """Count how many times each label is repeated"""
+
         return [labels.count(c) for c in set(labels)]
 
     @staticmethod
     def get_prevalent_label(labels: list):
+        """Get label of the node - the most frequent from the samples of the node"""
+
         return list(set(labels))[np.argmax(Node.get_label_occurrences(labels))]
 
     @staticmethod
@@ -201,14 +226,26 @@ class Node(object):
         self._children.append(child)
 
     def add_new_child(self, indices):
+        """Create a new child instance and add it to the node's children.
+
+        Parameters
+        ----------
+        indices     :   iterable
+            indices from the node's samples to be assigned to the child
+        """
+
         child = self.__class__(self._data, level=self.level+1, indices=indices, parent=self,
                                which_child=len(self.children))
         self._add_child(child)
 
     def add_final_child(self):
+        """Add a child to the node such as the rest of the not yet distributed indices are assigned to the child"""
+
         self.add_new_child(self.indices_remaining)
 
     def _get_split_indices(self, attribute, thresholds):
+        """Split node sample indices for given attribute and threshold"""
+
         th = sorted(list(thresholds) + [-inf, inf])
 
         vals = self.data[attribute]
@@ -257,12 +294,18 @@ class Node(object):
         self._split_attribute = attribute
 
     def undo_split(self):
+        """Remove children of a node and make it terminal"""
+
         logger.debug(f"Undoing split at node {self.trace()}")
         self._children = []
         self._indices_remaining = self._indices_distributed.copy()
         self._indices_distributed = set()
 
     def choose_split_threshold(self, attribute, n=10):
+        """Perform search for the best threshold for split at given attribute.
+
+        'n' - granularity of the search (check every n-th threshold candidate)"""
+
         vals = np.sort(np.array(self.data[attribute]))  # values for the attribute
         th_cand = 0.5 * (vals[1:] + vals[:-1])  # threshold candidates - consecutive mid-points
         th_cand = th_cand[::n]  # check every n-th
@@ -279,6 +322,9 @@ class Node(object):
         return chosen_gain, chosen_threshold
 
     def choose_split_attribute(self, **kwargs):
+        """Compute information gains for splits at each attribute (for each of them, adjust the threshold) and choose
+        the best one."""
+
         all_attributes = self.input_attributes
         all_gains = len(all_attributes) * [0]
         all_thresholds = all_gains[:]
@@ -294,15 +340,24 @@ class Node(object):
         return chosen_attribute, [all_thresholds[idx]]
 
     def split(self, **kwargs):
+        """Split a node automatically (determine the attribute and threshold)."""
+
         s = self.choose_split_attribute(**kwargs)
         logger.info(f"Splitting at attribute '{s[0]}' with threshold: {s[1][0]:.2g}")
         self.split_at(*s)
 
     def terminate(self):
+        """Mark node as terminal."""
+
+        if self.children:
+            raise RuntimeError("Could not terminate a node with children")
+
         self._terminal = True
         self._class = self.get_prevalent_label(self.class_labels.to_list())
 
     def learn(self, max_depth=5, **kwargs):
+        """Grow the decision tree to a certain maximal depth."""
+
         if max_depth < 0:
             raise ValueError(f"Invalid maximal depth ({max_depth})")
 
@@ -328,6 +383,8 @@ class Node(object):
             child.learn(max_depth=max_depth-1, **kwargs)
 
     def print_terminal_labels(self):
+        """Print sample labels at each terminal node."""
+
         if len(self.children):
             for child in self.children:
                 child.print_terminal_labels()
@@ -336,6 +393,8 @@ class Node(object):
             print(f"Level {self.level} node, {self.trace()}: class {self._class} ({self.class_labels.to_list()})")
 
     def trace(self):
+        """Return a node stamp - 'which child' parameter from the root to the node."""
+
         if self.parent:
             return self.parent.trace() + [self._which_child]
 
@@ -343,6 +402,8 @@ class Node(object):
             return []
 
     def prune(self, min_points=2):
+        """Prune the tree - remove children if any of them has less than min_points samples."""
+
         if len(self.children):
             if any(child.n_points < min_points for child in self.children):
                 logger.info(f"Pruning at node {self.trace()}")
@@ -376,12 +437,16 @@ class Node(object):
         return self._get_child_from_value(observation[self._split_attribute].item())
 
     def predict_class(self, observation):
+        """Predict class for a single observation."""
+
         if self._terminal:
             return self._class
 
         return self._get_child_from_df(observation).predict_class(observation)
 
     def predict_classes(self, observations: pd.DataFrame):
+        """Predict classes for a set of observations."""
+
         classes = []
 
         n = len(observations)
@@ -393,6 +458,8 @@ class Node(object):
         return classes
 
     def test(self, observations: pd.DataFrame):
+        """Predict classes for a set of observations and report the testing score."""
+
         pred_classes = self.predict_classes(observations)               # predicted classes
         true_classes = observations[self.target_attribute].to_list()    # actual classes
 
